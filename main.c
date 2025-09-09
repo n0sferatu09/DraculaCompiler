@@ -1,4 +1,4 @@
-#include "data.h"
+#include "hashtable.h"
 #include "defs.h"
 
 
@@ -37,11 +37,19 @@ Token *generate_numbers(FILE *file, char first_number) {
 
             current = fgetc(file);
             if (current != EOF && (current == '+' || current == '-')) {
-                if (index < BUFFER_SIZE) {
+                char sign = current;
+                current = fgetc(file);
+
+                if (isdigit(current)) {
+                    buffer[index++] = sign;
                     buffer[index++] = current;
+                } else {
+                    ungetc(current, file);
+                    ungetc(sign, file);
+                    fprintf(stderr, "Invalid Exponent: missing digits\n");
+                    free(token);
+                    return NULL;
                 }
-            } else {
-                ungetc(current, file);
             }
         }
 
@@ -126,21 +134,15 @@ Token *generate_keywords(FILE *file, char first_letter) {
         ungetc(current, file);
     }
 
-    if (strcmp("exit", buffer) == 0) {
+    if (keywords_table == NULL) {
+        init_keyword_table();
+    }
+
+    gpointer keyword_type = g_hash_table_lookup(keywords_table, buffer);
+
+    if (keyword_type != NULL) {
         token->type = TOKEN_KEYWORD;
-        token->value.keyword = KEYWORD_EXIT;
-    } else if (strcmp("if", buffer) == 0) {
-        token->type = TOKEN_KEYWORD;
-        token->value.keyword = KEYWORD_IF;
-    } else if (strcmp("else", buffer) == 0) {
-        token->type = TOKEN_KEYWORD;
-        token->value.keyword = KEYWORD_ELSE;
-    } else if (strcmp("while", buffer) == 0) {
-        token->type = TOKEN_KEYWORD;
-        token->value.keyword = KEYWORD_WHILE;
-    } else if (strcmp("for", buffer) == 0) {
-        token->type = TOKEN_KEYWORD;
-        token->value.keyword = KEYWORD_FOR;
+        token->value.keyword = GPOINTER_TO_INT(keyword_type);
     } else {
         token->type = TOKEN_IDENTIFIER;
         token->value.string_value = strdup(buffer);
@@ -266,6 +268,7 @@ int main() {
         return 1;
     }
 
+    cleanup_all_hash_table();
     lexer(file);
     fclose(file);
     return 0;
