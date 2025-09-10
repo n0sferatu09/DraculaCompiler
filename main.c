@@ -2,6 +2,47 @@
 #include "defs.h"
 
 
+char is_operator(char c) {
+    return strchr("+-*/%<>=&|^~", c) != NULL;
+}
+
+
+Token *generate_operators(FILE *file, char first_char) {
+    Token *token = malloc(sizeof(Token));
+    if (token == NULL) return NULL;
+
+    char buffer[OPERATORS_SIZE + 1] = {0};
+    int index = 0;
+
+    buffer[index++] = first_char;
+
+    char current = fgetc(file);
+    while (current != EOF && is_operator(current) && index < OPERATORS_SIZE) {
+        buffer[index++] = current;
+        current = fgetc(file);
+    }
+
+    buffer[index] = '\0';
+
+    if (current != EOF && !is_operator(current)) {
+        ungetc(current, file);
+    }
+
+    if (operators_table == NULL) {
+        init_operators_table();
+    }
+
+    gpointer operator_type = g_hash_table_lookup(operators_table, buffer);
+
+    if (operator_type != NULL) {
+        token->type = GPOINTER_TO_INT(operator_type);
+        token->value.string_value = buffer;
+    }
+    
+    return token;
+}
+
+
 Token *generate_numbers(FILE *file, char first_number) {
     Token *token = malloc(sizeof(Token));
     if (token == NULL) return NULL;
@@ -188,6 +229,10 @@ void lexer(FILE *file) {
         if (isspace(current)) {
             current = fgetc(file);
             continue;
+        } else if (is_operator(current)) {
+            Token *token_operator = generate_operators(file, current);
+            printf("FOUND OPERATOR: %s\n", token_operator->value.string_value);
+            free(token_operator);
         } else if (ispunct(current)) {
             Token *token_punctuator = generate_punctuators(current);
 
