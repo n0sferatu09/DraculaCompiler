@@ -99,6 +99,18 @@ void init_operators_table() {
     g_hash_table_insert(operators_table, g_strdup("~"), GINT_TO_POINTER(TOKEN_BIT_NOT));
     g_hash_table_insert(operators_table, g_strdup("<<"), GINT_TO_POINTER(TOKEN_LEFT_SHIFT));
     g_hash_table_insert(operators_table, g_strdup(">>"), GINT_TO_POINTER(TOKEN_RIGHT_SHIFT));
+
+    // Punctuators
+    g_hash_table_insert(operators_table, g_strdup("("), GINT_TO_POINTER(TOKEN_OPEN_PAREN));
+    g_hash_table_insert(operators_table, g_strdup(")"), GINT_TO_POINTER(TOKEN_CLOSE_PAREN));
+    g_hash_table_insert(operators_table, g_strdup("{"), GINT_TO_POINTER(TOKEN_OPEN_BRACE));
+    g_hash_table_insert(operators_table, g_strdup("}"), GINT_TO_POINTER(TOKEN_CLOSE_BRACE));
+    g_hash_table_insert(operators_table, g_strdup("["), GINT_TO_POINTER(TOKEN_OPEN_BRACKET));
+    g_hash_table_insert(operators_table, g_strdup("]"), GINT_TO_POINTER(TOKEN_CLOSE_BRACKET));
+    g_hash_table_insert(operators_table, g_strdup(";"), GINT_TO_POINTER(TOKEN_SEMICOLON));
+    g_hash_table_insert(operators_table, g_strdup(":"), GINT_TO_POINTER(TOKEN_COLON));
+    g_hash_table_insert(operators_table, g_strdup(","), GINT_TO_POINTER(TOKEN_COMMA));
+    g_hash_table_insert(operators_table, g_strdup("."), GINT_TO_POINTER(TOKEN_DOT));
 }
 
 
