@@ -2,47 +2,6 @@
 #include "defs.h"
 
 
-char is_operator(char c) {
-    return strchr("+-*/%<>=&|^~", c) != NULL;
-}
-
-
-Token *generate_operators(FILE *file, char first_char) {
-    Token *token = malloc(sizeof(Token));
-    if (token == NULL) return NULL;
-
-    char buffer[OPERATORS_SIZE + 1] = {0};
-    int index = 0;
-
-    buffer[index++] = first_char;
-
-    char current = fgetc(file);
-    while (current != EOF && is_operator(current) && index < OPERATORS_SIZE) {
-        buffer[index++] = current;
-        current = fgetc(file);
-    }
-
-    buffer[index] = '\0';
-
-    if (current != EOF && !is_operator(current)) {
-        ungetc(current, file);
-    }
-
-    if (operators_table == NULL) {
-        init_operators_table();
-    }
-
-    gpointer operator_type = g_hash_table_lookup(operators_table, buffer);
-
-    if (operator_type != NULL) {
-        token->type = GPOINTER_TO_INT(operator_type);
-        token->value.string_value = buffer;
-    }
-    
-    return token;
-}
-
-
 Token *generate_numbers(FILE *file, char first_number) {
     Token *token = malloc(sizeof(Token));
     if (token == NULL) return NULL;
@@ -193,29 +152,40 @@ Token *generate_keywords(FILE *file, char first_letter) {
 }
 
 
-Token *generate_punctuators(char current) {
+Token *generate_punctuators(FILE *file, char first_char) {
     Token *token = malloc(sizeof(Token));
+    if (token == NULL) return NULL;
 
-    switch(current) {
-        case '(':
-            token->type = TOKEN_OPEN_PAREN;
-            break;
-        case ')':
-            token->type = TOKEN_CLOSE_PAREN;
-            break;
-        case '{':
-            token->type = TOKEN_OPEN_BRACE;
-            break;
-        case '}':
-            token->type = TOKEN_CLOSE_BRACE;
-            break;
-        case ';':
-            token->type = TOKEN_SEMICOLON;
-            break;
-        default:
-            free(token);
-            return NULL;
-    } 
+    char buffer[OPERATORS_SIZE + 1] = {0};
+    int index = 0;
+    
+    buffer[index++] = first_char;
+
+    char current = fgetc(file);
+    while (current != EOF && ispunct(current) && (index < OPERATORS_SIZE - 1)) {
+        buffer[index++] = current;
+        current = fgetc(file);
+    }
+
+    buffer[index] = '\0';
+
+    if (current != EOF && !ispunct(current)) {
+        ungetc(current, file);
+    }
+
+    if (operators_table == NULL) {
+        init_operators_table();
+    }
+
+    gpointer punctuator_type = g_hash_table_lookup(operators_table, buffer);
+
+    if (punctuator_type != NULL) {
+        token->type = GPOINTER_TO_INT(punctuator_type);
+        token->value.string_value = strdup(buffer);
+    } else {
+        free(token);
+        return NULL;
+    }
 
     return token;
 }
@@ -229,37 +199,13 @@ void lexer(FILE *file) {
         if (isspace(current)) {
             current = fgetc(file);
             continue;
-        } else if (is_operator(current)) {
-            Token *token_operator = generate_operators(file, current);
-            printf("FOUND OPERATOR: %s\n", token_operator->value.string_value);
-            free(token_operator);
+
         } else if (ispunct(current)) {
-            Token *token_punctuator = generate_punctuators(current);
+            Token *token_punctuator = generate_punctuators(file, current);
+            printf("FOUND A OPERATOR: %s\n", token_punctuator->value.string_value);
 
-            if (token_punctuator != NULL) {
-                switch(token_punctuator->type) {
-                    case TOKEN_OPEN_PAREN:
-                        printf("FOUND OPEN PAREN\n");
-                        break;
-                    case TOKEN_CLOSE_PAREN:
-                        printf("FOUND CLOSE PAREN\n");
-                        break;
-                    case TOKEN_OPEN_BRACE:
-                        printf("FOUND OPEN BRACE\n");
-                        break;
-                    case TOKEN_CLOSE_BRACE:
-                        printf("FOUND CLOSE BRACE\n");
-                        break;
-                    case TOKEN_SEMICOLON:
-                        printf("FOUND SEMICOLON\n");
-                        break;
-                    default:
-                        printf("WARNING: UNKNOWN SEPARATOR: %c", token_punctuator->type);
-                }
-
-                free(token_punctuator);
-            }
-
+            free(token_punctuator->value.string_value);
+            free(token_punctuator);
         } else if (isdigit(current)) {
             Token *token_number = generate_numbers(file, current);
 
