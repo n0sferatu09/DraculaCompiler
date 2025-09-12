@@ -161,6 +161,26 @@ Token *generate_punctuators(FILE *file, char first_char) {
     
     buffer[index++] = first_char;
 
+    if (first_char != EOF && first_char == ')') {
+        buffer[index] = '\0';
+
+        if (operators_table == NULL) {
+            init_operators_table();
+        }
+
+        gpointer punctuator_type = g_hash_table_lookup(operators_table, buffer);
+
+        if (punctuator_type != NULL) {
+            token->type = GPOINTER_TO_INT(punctuator_type);
+            token->value.string_value = strdup(buffer);
+            return token;
+        } else {
+            free(token);
+            return NULL;
+        }
+
+    }
+
     char current = fgetc(file);
     while (current != EOF && ispunct(current) && (index < OPERATORS_SIZE - 1)) {
         buffer[index++] = current;
