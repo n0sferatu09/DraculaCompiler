@@ -3,7 +3,7 @@
 
 
 Token *generate_numbers(FILE *file, char first_number) {
-    Token *token = malloc(sizeof(Token));
+    Token *token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
     char buffer[BUFFER_SIZE + 1] = {0};
@@ -113,7 +113,7 @@ Token *generate_numbers(FILE *file, char first_number) {
 
 
 Token *generate_keywords(FILE *file, char first_letter) {
-    Token *token = malloc(sizeof(Token));
+    Token *token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
     char buffer[KEYWORD_SIZE + 1] = {0};
@@ -124,7 +124,9 @@ Token *generate_keywords(FILE *file, char first_letter) {
     char current = fgetc(file);
 
     while(isalpha(current) && current != EOF) {
-        buffer[index++] = current;
+        if (index < KEYWORD_SIZE - 1) {
+            buffer[index++] = current;
+        }
         current = fgetc(file);
     }
 
@@ -143,6 +145,7 @@ Token *generate_keywords(FILE *file, char first_letter) {
     if (keyword_type != NULL) {
         token->type = TOKEN_KEYWORD;
         token->value.keyword = GPOINTER_TO_INT(keyword_type);
+        token->value.string_value = strdup(buffer);
     } else {
         token->type = TOKEN_IDENTIFIER;
         token->value.string_value = strdup(buffer);
@@ -153,7 +156,7 @@ Token *generate_keywords(FILE *file, char first_letter) {
 
 
 Token *generate_punctuators(FILE *file, char first_char) {
-    Token *token = malloc(sizeof(Token));
+    Token *token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
     char buffer[OPERATORS_SIZE + 1] = {0};
@@ -244,25 +247,15 @@ void lexer(FILE *file) {
         } else if (isalpha(current)) {
             Token *token_keyword = generate_keywords(file, current);
 
-            if (token_keyword->value.keyword == KEYWORD_EXIT) {
-                printf("FOUND KEYWORD: EXIT\n");
-            } else if (token_keyword->value.keyword == KEYWORD_IF) {
-                printf("FOUND KEYWORD: IF\n");
-            } else if (token_keyword->value.keyword == KEYWORD_ELSE) {
-                printf("FOUND KEYWORD: ELSE\n");
-            } else if (token_keyword->value.keyword == KEYWORD_WHILE) {
-                printf("FOUND KEYWORD: WHILE\n");
-            } else if (token_keyword->value.keyword == KEYWORD_FOR) {
-                printf("FOUND KEYWORD: FOR\n");
-            } else if (token_keyword->type == TOKEN_IDENTIFIER) {
-                printf("FOUND IDENTIFIER %s\n", token_keyword->value.string_value);
+            if (token_keyword->type == TOKEN_KEYWORD) {
+                printf("FOUND A KEYWORD: %s\n", token_keyword->value.string_value);
                 free(token_keyword->value.string_value);
             } else {
-                printf("UNKNOWN KEYWORD\n");
+                printf("FOUND A IDENTIFIER: %s\n", token_keyword->value.string_value);
+                free(token_keyword->value.string_value);
             }
 
             free(token_keyword);
-
         }
 
         current = fgetc(file);
