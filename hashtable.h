@@ -49,6 +49,7 @@ void init_keyword_table() {
     g_hash_table_insert(keywords_table, g_strdup("true"), GINT_TO_POINTER(KEYWORD_TRUE));
     g_hash_table_insert(keywords_table, g_strdup("false"), GINT_TO_POINTER(KEYWORD_FALSE));
     g_hash_table_insert(keywords_table, g_strdup("NULL"), GINT_TO_POINTER(KEYWORD_NULL));
+    g_hash_table_insert(keywords_table, g_strdup("EOF"), GINT_TO_POINTER(TOKEN_EOF));
 
     // Special Keywords
     g_hash_table_insert(keywords_table, g_strdup("sizeof"), GINT_TO_POINTER(KEYWORD_SIZEOF));
@@ -69,6 +70,7 @@ void init_operators_table() {
     g_hash_table_insert(operators_table, g_strdup("-"), GINT_TO_POINTER(TOKEN_MINUS));
     g_hash_table_insert(operators_table, g_strdup("*"), GINT_TO_POINTER(TOKEN_STAR));
     g_hash_table_insert(operators_table, g_strdup("/"), GINT_TO_POINTER(TOKEN_SLASH));
+    g_hash_table_insert(operators_table, g_strdup("//"), GINT_TO_POINTER(TOKEN_COMMENT));
     g_hash_table_insert(operators_table, g_strdup("%"), GINT_TO_POINTER(TOKEN_PERCENT));
 
     // Assignment Operators
