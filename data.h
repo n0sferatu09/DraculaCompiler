@@ -136,3 +136,20 @@ typedef struct {
     int line;
     int column;
 } Token;
+
+
+typedef struct {
+    Token** tokens;
+    int count;
+    int capacity;
+} TokenStream;
+
+
+TokenStream* init_token_stream() {
+    TokenStream* stream = malloc(sizeof(Token*) * 2);
+    stream->count = 0;
+    stream->capacity = 2;
+
+    return stream;
+}
+
