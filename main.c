@@ -2,8 +2,8 @@
 #include "defs.h"
 
 
-Token *generate_numbers(FILE *file, char first_number) {
-    Token *token = malloc(sizeof(*token));
+Token* generate_numbers(FILE* file, char first_number) {
+    Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
     char buffer[BUFFER_SIZE + 1] = {0};
@@ -112,8 +112,8 @@ Token *generate_numbers(FILE *file, char first_number) {
 }
 
 
-Token *generate_keywords(FILE *file, char first_letter) {
-    Token *token = malloc(sizeof(*token));
+Token* generate_keywords(FILE* file, char first_letter) {
+    Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
     char buffer[KEYWORD_SIZE + 1] = {0};
@@ -155,8 +155,8 @@ Token *generate_keywords(FILE *file, char first_letter) {
 }
 
 
-Token *generate_punctuators(FILE *file, char first_char) {
-    Token *token = malloc(sizeof(*token));
+Token* generate_punctuators(FILE* file, char first_char) {
+    Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
     char buffer[OPERATORS_SIZE + 1] = {0};
@@ -164,7 +164,10 @@ Token *generate_punctuators(FILE *file, char first_char) {
     
     buffer[index++] = first_char;
 
-    if (first_char != EOF && first_char == ')') {
+    if ((first_char != EOF && first_char == ')') ||
+        (first_char != EOF && first_char == ']') ||
+        (first_char != EOF && first_char == '}')) {
+
         buffer[index] = '\0';
 
         if (operators_table == NULL) {
@@ -174,7 +177,8 @@ Token *generate_punctuators(FILE *file, char first_char) {
         gpointer punctuator_type = g_hash_table_lookup(operators_table, buffer);
 
         if (punctuator_type != NULL) {
-            token->type = GPOINTER_TO_INT(punctuator_type);
+            token->type = TOKEN_PUNCTUATOR;
+            token->value.punctuator = GPOINTER_TO_INT(punctuator_type);
             token->value.string_value = strdup(buffer);
             return token;
         } else {
@@ -203,7 +207,8 @@ Token *generate_punctuators(FILE *file, char first_char) {
     gpointer punctuator_type = g_hash_table_lookup(operators_table, buffer);
 
     if (punctuator_type != NULL) {
-        token->type = GPOINTER_TO_INT(punctuator_type);
+        token->type = TOKEN_PUNCTUATOR;
+        token->value.punctuator = GPOINTER_TO_INT(punctuator_type);
         token->value.string_value = strdup(buffer);
     } else {
         free(token);
@@ -214,7 +219,8 @@ Token *generate_punctuators(FILE *file, char first_char) {
 }
 
 
-void lexer(FILE *file) {
+void lexer(FILE* file) {
+    TokenStream* stream = init_tokens_stream();
     char current;
     current = fgetc(file);
     
@@ -224,13 +230,14 @@ void lexer(FILE *file) {
             continue;
 
         } else if (ispunct(current)) {
-            Token *token_punctuator = generate_punctuators(file, current);
+            Token* token_punctuator = generate_punctuators(file, current);
+            add_tokens_to_stream(stream, token_punctuator);
             printf("FOUND A OPERATOR: %s\n", token_punctuator->value.string_value);
 
             free(token_punctuator->value.string_value);
             free(token_punctuator);
         } else if (isdigit(current)) {
-            Token *token_number = generate_numbers(file, current);
+            Token* token_number = generate_numbers(file, current);
 
             if (token_number->type == TOKEN_INT) {
                 printf("FOUND INTEGER NUMBER %d\n", token_number->value.int_value);
@@ -245,7 +252,7 @@ void lexer(FILE *file) {
             free(token_number);
 
         } else if (isalpha(current)) {
-            Token *token_keyword = generate_keywords(file, current);
+            Token* token_keyword = generate_keywords(file, current);
 
             if (token_keyword->type == TOKEN_KEYWORD) {
                 printf("FOUND A KEYWORD: %s\n", token_keyword->value.string_value);
@@ -264,7 +271,7 @@ void lexer(FILE *file) {
 
 
 int main() {
-    FILE *file;
+    FILE* file;
     file = fopen("test.unn", "r");
 
     if (file == NULL) {
