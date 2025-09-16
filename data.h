@@ -17,62 +17,15 @@ typedef enum {
     TOKEN_KEYWORD,
 
     // Indentifier and Literal
+    TOKEN_PUNCTUATOR,
     TOKEN_IDENTIFIER,
     TOKEN_STRING_LITERAL,
-
-    // Separators
-    TOKEN_OPEN_PAREN,
-    TOKEN_CLOSE_PAREN,
-    TOKEN_OPEN_BRACE,
-    TOKEN_CLOSE_BRACE,
-    TOKEN_OPEN_BRACKET,
-    TOKEN_CLOSE_BRACKET,
-    TOKEN_SEMICOLON,
-    TOKEN_COLON,
-    TOKEN_COMMA,
-    TOKEN_DOT,
-
-
-    // Arithmetic Operators
-    TOKEN_PLUS,
-    TOKEN_MINUS,
-    TOKEN_STAR,
-    TOKEN_SLASH,
-    TOKEN_PERCENT,
-
-    // Assignment Operators
-    TOKEN_ASSIGN,
-    TOKEN_PLUS_ASSIGN,
-    TOKEN_MINUS_ASSIGN,
-    TOKEN_STAR_ASSIGN,
-    TOKEN_SLASH_ASSIGN,
-    TOKEN_PERCENT_ASSIGN,
-
-    // Equals Operators
-    TOKEN_EQUALS,
-    TOKEN_NOT_EQUALS,
-    TOKEN_LESS_THAN,
-    TOKEN_GREATER_THAN,
-    TOKEN_LESS_EQUALS,
-    TOKEN_GREATER_EQUALS,
-
-    // Logic Operators
-    TOKEN_AND,
-    TOKEN_OR,
-    TOKEN_NOT,
-
-    // Bitwise Operators
-    TOKEN_BIT_AND,
-    TOKEN_BIT_OR,
-    TOKEN_BIT_XOR,
-    TOKEN_BIT_NOT,
-    TOKEN_LEFT_SHIFT,
-    TOKEN_RIGHT_SHIFT,
 
     // Special Tokens
     TOKEN_EOF,
     TOKEN_ERROR,
     TOKEN_COMMENT,
+
 } TokenType;
 
 
@@ -122,6 +75,59 @@ typedef enum {
 } TokenKeyword;
 
 
+typedef enum {
+    // Separators
+    TOKEN_OPEN_PAREN,
+    TOKEN_CLOSE_PAREN,
+    TOKEN_OPEN_BRACE,
+    TOKEN_CLOSE_BRACE,
+    TOKEN_OPEN_BRACKET,
+    TOKEN_CLOSE_BRACKET,
+    TOKEN_SEMICOLON,
+    TOKEN_COLON,
+    TOKEN_COMMA,
+    TOKEN_DOT,
+
+
+    // Arithmetic Operators
+    TOKEN_PLUS,
+    TOKEN_MINUS,
+    TOKEN_STAR,
+    TOKEN_SLASH,
+    TOKEN_PERCENT,
+
+    // Assignment Operators
+    TOKEN_ASSIGN,
+    TOKEN_PLUS_ASSIGN,
+    TOKEN_MINUS_ASSIGN,
+    TOKEN_STAR_ASSIGN,
+    TOKEN_SLASH_ASSIGN,
+    TOKEN_PERCENT_ASSIGN,
+
+    // Equals Operators
+    TOKEN_EQUALS,
+    TOKEN_NOT_EQUALS,
+    TOKEN_LESS_THAN,
+    TOKEN_GREATER_THAN,
+    TOKEN_LESS_EQUALS,
+    TOKEN_GREATER_EQUALS,
+
+    // Logic Operators
+    TOKEN_AND,
+    TOKEN_OR,
+    TOKEN_NOT,
+
+    // Bitwise Operators
+    TOKEN_BIT_AND,
+    TOKEN_BIT_OR,
+    TOKEN_BIT_XOR,
+    TOKEN_BIT_NOT,
+    TOKEN_LEFT_SHIFT,
+    TOKEN_RIGHT_SHIFT,   
+
+} TokenPunctuator;
+
+
 typedef struct {
     TokenType type;
     union {
@@ -131,6 +137,7 @@ typedef struct {
         float float_value;
         double double_value;
         TokenKeyword keyword;
+        TokenPunctuator punctuator;
     } value;
 
     int line;
@@ -145,11 +152,42 @@ typedef struct {
 } TokenStream;
 
 
-TokenStream* init_token_stream() {
-    TokenStream* stream = malloc(sizeof(Token*) * 2);
+TokenStream* init_tokens_stream() {
+    TokenStream* stream = malloc(sizeof(TokenStream));
+    stream->tokens = malloc(sizeof(Token*) * 16);
     stream->count = 0;
-    stream->capacity = 2;
+    stream->capacity = 16;
 
     return stream;
 }
 
+
+void add_tokens_to_stream(TokenStream* stream, Token* token) {
+    if (stream->count >= stream->capacity) {
+        stream->capacity *= 2;
+        stream->tokens = realloc(stream->tokens, sizeof(Token*) * stream->capacity);
+        
+        if (stream->tokens == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+
+    stream->tokens[stream->count++] = token;
+}
+
+
+void free_tokens_stream(TokenStream* stream) {
+    for (int i = 0; i < stream->count; i++) {
+        Token* token = stream->tokens[i];
+        if (token->type == TOKEN_IDENTIFIER || token->type == TOKEN_PUNCTUATOR) {
+            free(token->value.string_value);
+        }
+        
+        free(token);
+    }
+
+    free(stream->tokens);
+    free(stream);
+}
