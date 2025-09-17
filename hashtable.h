@@ -109,6 +109,8 @@ void init_operators_table() {
     g_hash_table_insert(operators_table, g_strdup("}"), GINT_TO_POINTER(TOKEN_CLOSE_BRACE));
     g_hash_table_insert(operators_table, g_strdup("["), GINT_TO_POINTER(TOKEN_OPEN_BRACKET));
     g_hash_table_insert(operators_table, g_strdup("]"), GINT_TO_POINTER(TOKEN_CLOSE_BRACKET));
+    g_hash_table_insert(operators_table, g_strdup("\""), GINT_TO_POINTER(TOKEN_DOUBLE_QUOTES));
+    g_hash_table_insert(operators_table, g_strdup("\'"), GINT_TO_POINTER(TOKEN_SINGLE_QUOTES));
     g_hash_table_insert(operators_table, g_strdup(";"), GINT_TO_POINTER(TOKEN_SEMICOLON));
     g_hash_table_insert(operators_table, g_strdup(":"), GINT_TO_POINTER(TOKEN_COLON));
     g_hash_table_insert(operators_table, g_strdup(","), GINT_TO_POINTER(TOKEN_COMMA));
