@@ -164,9 +164,13 @@ Token* generate_punctuators(FILE* file, char first_char) {
     
     buffer[index++] = first_char;
 
-    if ((first_char != EOF && first_char == ')') ||
-        (first_char != EOF && first_char == ']') ||
-        (first_char != EOF && first_char == '}')) {
+    if (first_char != EOF && 
+       (first_char == '(' || first_char == ')' ||
+        first_char == '[' || first_char == ']' ||
+        first_char == '{' || first_char == '}' ||
+        first_char == ';' || first_char == ':' ||
+        first_char == ',' || first_char == '.' ||
+        first_char == '"' || first_char == '\'')) {
 
         buffer[index] = '\0';
 
@@ -219,7 +223,7 @@ Token* generate_punctuators(FILE* file, char first_char) {
 }
 
 
-void lexer(FILE* file) {
+TokenStream* lexer(FILE* file) {
     TokenStream* stream = init_tokens_stream();
     char current;
     current = fgetc(file);
@@ -273,6 +277,8 @@ void lexer(FILE* file) {
 int main() {
     FILE* file;
     file = fopen("test.unn", "r");
+
+    TokenStream* stream = lexer(file);
 
     if (file == NULL) {
         printf("Error: cannot open file\n");
