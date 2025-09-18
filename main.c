@@ -3,6 +3,8 @@
 
 
 Token* generate_numbers(FILE* file, char first_number) {
+    if (first_number == EOF) return NULL;
+
     Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
@@ -113,6 +115,8 @@ Token* generate_numbers(FILE* file, char first_number) {
 
 
 Token* generate_keywords(FILE* file, char first_letter) {
+    if (first_letter == EOF) return NULL;
+
     Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
@@ -156,70 +160,72 @@ Token* generate_keywords(FILE* file, char first_letter) {
 
 
 Token* generate_punctuators(FILE* file, char first_char) {
+    if (first_char == EOF) return NULL;
+
     Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
     char buffer[OPERATORS_SIZE + 1] = {0};
     int index = 0;
-    
+
     buffer[index++] = first_char;
+    if (first_char == '(') {
+        buffer[index] = '\0';
+        token->type = TOKEN_PUNCTUATOR;
+        token->value.punctuator = TOKEN_OPEN_PAREN;
+        token->value.string_value = strdup("(");
+        return token;
+    }
 
-    if (first_char != EOF && 
-       (first_char == '(' || first_char == ')' ||
-        first_char == '[' || first_char == ']' ||
-        first_char == '{' || first_char == '}' ||
-        first_char == ';' || first_char == ':' ||
-        first_char == ',' || first_char == '.' ||
-        first_char == '"' || first_char == '\'')) {
+    char current = fgetc(file);
+    if (current != EOF && !ispunct(current)) {
+        if (first_char == ')' ||
+            first_char == '[' || first_char == ']' ||
+            first_char == '{' || first_char == '}' ||
+            first_char == '"' || first_char == '\'' ||
+            first_char == ':' || first_char == ';' ||
+            first_char == '.' || first_char == ',') {
 
+            buffer[index] = '\0';
+            ungetc(current, file);
+
+            if (operators_table == NULL) {
+                init_operators_table();
+            } 
+
+            gpointer punctuators_type = g_hash_table_lookup(operators_table, buffer);
+        
+            if (punctuators_type != NULL) {
+                token->type = TOKEN_PUNCTUATOR;
+                token->value.punctuator = GPOINTER_TO_INT(punctuators_type);
+                token->value.string_value = strdup(buffer);
+                return token;
+            } else {
+                printf("UNKNOWN OPERATOR %s", buffer);
+                free(token);
+                return NULL;
+            }
+        }
+    } else if (current != EOF && ispunct(current) && (index < OPERATORS_SIZE - 1)) {
+        buffer[index++] = current;
         buffer[index] = '\0';
 
         if (operators_table == NULL) {
             init_operators_table();
-        }
+        } 
 
-        gpointer punctuator_type = g_hash_table_lookup(operators_table, buffer);
-
-        if (punctuator_type != NULL) {
+        gpointer punctuators_type = g_hash_table_lookup(operators_table, buffer);
+        
+        if (punctuators_type != NULL) {
             token->type = TOKEN_PUNCTUATOR;
-            token->value.punctuator = GPOINTER_TO_INT(punctuator_type);
+            token->value.punctuator = GPOINTER_TO_INT(punctuators_type);
             token->value.string_value = strdup(buffer);
             return token;
-        } else {
-            free(token);
-            return NULL;
         }
-
     }
 
-    char current = fgetc(file);
-    while (current != EOF && ispunct(current) && (index < OPERATORS_SIZE - 1)) {
-        buffer[index++] = current;
-        current = fgetc(file);
-    }
-
-    buffer[index] = '\0';
-
-    if (current != EOF && !ispunct(current)) {
-        ungetc(current, file);
-    }
-
-    if (operators_table == NULL) {
-        init_operators_table();
-    }
-
-    gpointer punctuator_type = g_hash_table_lookup(operators_table, buffer);
-
-    if (punctuator_type != NULL) {
-        token->type = TOKEN_PUNCTUATOR;
-        token->value.punctuator = GPOINTER_TO_INT(punctuator_type);
-        token->value.string_value = strdup(buffer);
-    } else {
-        free(token);
-        return NULL;
-    }
-
-    return token;
+    free(token);
+    return NULL;
 }
 
 
@@ -238,10 +244,9 @@ TokenStream* lexer(FILE* file) {
             add_tokens_to_stream(stream, token_punctuator);
             printf("FOUND A OPERATOR: %s\n", token_punctuator->value.string_value);
 
-            free(token_punctuator->value.string_value);
-            free(token_punctuator);
         } else if (isdigit(current)) {
             Token* token_number = generate_numbers(file, current);
+            add_tokens_to_stream(stream, token_number);
 
             if (token_number->type == TOKEN_INT) {
                 printf("FOUND INTEGER NUMBER %d\n", token_number->value.int_value);
@@ -252,25 +257,22 @@ TokenStream* lexer(FILE* file) {
             } else {
                 printf("UNKNOWN NUMBER\n");
             }
-            
-            free(token_number);
 
         } else if (isalpha(current)) {
             Token* token_keyword = generate_keywords(file, current);
+            add_tokens_to_stream(stream, token_keyword);
 
             if (token_keyword->type == TOKEN_KEYWORD) {
                 printf("FOUND A KEYWORD: %s\n", token_keyword->value.string_value);
-                free(token_keyword->value.string_value);
             } else {
                 printf("FOUND A IDENTIFIER: %s\n", token_keyword->value.string_value);
-                free(token_keyword->value.string_value);
             }
-
-            free(token_keyword);
         }
 
         current = fgetc(file);
     }
+
+    return stream;
 }
 
 
@@ -278,15 +280,25 @@ int main() {
     FILE* file;
     file = fopen("test.unn", "r");
 
-    TokenStream* stream = lexer(file);
+    init_keyword_table();
+    init_operators_table();
 
     if (file == NULL) {
         printf("Error: cannot open file\n");
         return 1;
     }
 
+    TokenStream* stream = lexer(file);
+
+    if (stream == NULL) {
+        printf("Error: Lexer returned NULL\n");
+        fclose(file);
+        return 1;
+    }
+
+    free_tokens_stream(stream);
     cleanup_all_hash_table();
-    lexer(file);
     fclose(file);
+
     return 0;
 }
