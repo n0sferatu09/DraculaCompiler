@@ -103,7 +103,6 @@ void init_operators_table() {
     g_hash_table_insert(operators_table, g_strdup(">>"), GINT_TO_POINTER(TOKEN_RIGHT_SHIFT));
 
     // Punctuators
-    g_hash_table_insert(operators_table, g_strdup("("), GINT_TO_POINTER(TOKEN_OPEN_PAREN));
     g_hash_table_insert(operators_table, g_strdup(")"), GINT_TO_POINTER(TOKEN_CLOSE_PAREN));
     g_hash_table_insert(operators_table, g_strdup("{"), GINT_TO_POINTER(TOKEN_OPEN_BRACE));
     g_hash_table_insert(operators_table, g_strdup("}"), GINT_TO_POINTER(TOKEN_CLOSE_BRACE));
