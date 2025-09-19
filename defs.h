@@ -1,4 +1,5 @@
 #define BUFFER_SIZE 64
 #define KEYWORD_SIZE 16
+#define PREPROCESSOR_SIZE 16
 #define OPERATORS_SIZE 4
 
