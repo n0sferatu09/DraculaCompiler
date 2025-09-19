@@ -3,6 +3,7 @@
 
 GHashTable* keywords_table = NULL;
 GHashTable* operators_table = NULL;
+GHashTable* preprocessor_table = NULL;
 
 void init_keyword_table() {
     if (keywords_table != NULL) {
@@ -53,8 +54,27 @@ void init_keyword_table() {
 
     // Special Keywords
     g_hash_table_insert(keywords_table, g_strdup("sizeof"), GINT_TO_POINTER(KEYWORD_SIZEOF));
-    g_hash_table_insert(keywords_table, g_strdup("#include"), GINT_TO_POINTER(KEYWORD_PREPROCESSOR));
-    g_hash_table_insert(keywords_table, g_strdup("#define"), GINT_TO_POINTER(KEYWORD_PREPROCESSOR));
+}
+
+
+void init_preprocessor_table() {
+    if (preprocessor_table != NULL) {
+        return;
+    }
+
+    preprocessor_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+
+    g_hash_table_insert(keywords_table, g_strdup("#include"), GINT_TO_POINTER(TOKEN_INCLUDE));
+    g_hash_table_insert(keywords_table, g_strdup("#define"), GINT_TO_POINTER(TOKEN_UNDEF));
+    g_hash_table_insert(keywords_table, g_strdup("#ifdef"), GINT_TO_POINTER(TOKEN_IFDEF));
+    g_hash_table_insert(keywords_table, g_strdup("#ifndef"), GINT_TO_POINTER(TOKEN_IFNDEF));
+    g_hash_table_insert(keywords_table, g_strdup("#if"), GINT_TO_POINTER(TOKEN_SHARP_IF));
+    g_hash_table_insert(keywords_table, g_strdup("#else"), GINT_TO_POINTER(TOKEN_SHARP_ELSE));
+    g_hash_table_insert(keywords_table, g_strdup("#elif"), GINT_TO_POINTER(TOKEN_SHARP_ELIF));
+    g_hash_table_insert(keywords_table, g_strdup("#endif"), GINT_TO_POINTER(TOKEN_ENDIF));
+    g_hash_table_insert(keywords_table, g_strdup("#error"), GINT_TO_POINTER(TOKEN_ERROR));
+    g_hash_table_insert(keywords_table, g_strdup("#warning"), GINT_TO_POINTER(TOKEN_WARNING));
+    g_hash_table_insert(keywords_table, g_strdup("#pragma"), GINT_TO_POINTER(TOKEN_PRAGMA));
 }
 
 
@@ -70,8 +90,10 @@ void init_operators_table() {
     g_hash_table_insert(operators_table, g_strdup("-"), GINT_TO_POINTER(TOKEN_MINUS));
     g_hash_table_insert(operators_table, g_strdup("*"), GINT_TO_POINTER(TOKEN_STAR));
     g_hash_table_insert(operators_table, g_strdup("/"), GINT_TO_POINTER(TOKEN_SLASH));
-    g_hash_table_insert(operators_table, g_strdup("//"), GINT_TO_POINTER(TOKEN_COMMENT));
     g_hash_table_insert(operators_table, g_strdup("%"), GINT_TO_POINTER(TOKEN_PERCENT));
+
+    // Comment
+    g_hash_table_insert(operators_table, g_strdup("//"), GINT_TO_POINTER(TOKEN_COMMENT));
 
     // Assignment Operators
     g_hash_table_insert(operators_table, g_strdup("="), GINT_TO_POINTER(TOKEN_ASSIGN));
@@ -80,6 +102,10 @@ void init_operators_table() {
     g_hash_table_insert(operators_table, g_strdup("*="), GINT_TO_POINTER(TOKEN_STAR_ASSIGN));
     g_hash_table_insert(operators_table, g_strdup("/="), GINT_TO_POINTER(TOKEN_SLASH_ASSIGN));
     g_hash_table_insert(operators_table, g_strdup("%="), GINT_TO_POINTER(TOKEN_PERCENT_ASSIGN));
+
+    // Increment and Decrement
+    g_hash_table_insert(operators_table, g_strdup("++"), GINT_TO_POINTER(TOKEN_INCREMENT));
+    g_hash_table_insert(operators_table, g_strdup("--"), GINT_TO_POINTER(TOKEN_DECREMENT));
 
     // Equals Operators
     g_hash_table_insert(operators_table, g_strdup("=="), GINT_TO_POINTER(TOKEN_EQUALS));
@@ -103,6 +129,7 @@ void init_operators_table() {
     g_hash_table_insert(operators_table, g_strdup(">>"), GINT_TO_POINTER(TOKEN_RIGHT_SHIFT));
 
     // Punctuators
+
     g_hash_table_insert(operators_table, g_strdup(")"), GINT_TO_POINTER(TOKEN_CLOSE_PAREN));
     g_hash_table_insert(operators_table, g_strdup("{"), GINT_TO_POINTER(TOKEN_OPEN_BRACE));
     g_hash_table_insert(operators_table, g_strdup("}"), GINT_TO_POINTER(TOKEN_CLOSE_BRACE));
@@ -126,5 +153,10 @@ void cleanup_all_hash_table(void) {
     if (operators_table != NULL) {
         g_hash_table_destroy(operators_table);
         operators_table = NULL;
+    }
+
+    if (preprocessor_table != NULL) {
+        g_hash_table_destroy(preprocessor_table);
+        preprocessor_table = NULL;
     }
 }
