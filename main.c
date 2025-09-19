@@ -159,6 +159,49 @@ Token* generate_keywords(FILE* file, char first_letter) {
 }
 
 
+Token* generate_preprocessor(FILE* file, char first_char) {
+    if (first_char == EOF) return NULL;
+
+    Token* token = malloc(sizeof(*token));
+    if (token == NULL) return NULL;
+
+    char buffer[PREPROCESSOR_SIZE + 1] = {0};
+    int index = 0;
+
+    buffer[index++] = first_char;
+
+    char current = fgetc(file);
+    while (current != EOF && isalpha(current) && (index < PREPROCESSOR_SIZE - 1)) {
+        buffer[index++] = current;
+        current = fgetc(file);
+    }
+
+    buffer[index] = '\0';
+
+    if (current != EOF && !isalpha(current)) {
+        ungetc(current, file);
+    }
+
+    if (preprocessor_table == NULL) {
+        init_preprocessor_table();
+    }
+
+    gpointer preprocessor_type = g_hash_table_lookup(preprocessor_table, buffer);
+
+    if (preprocessor_type != NULL) {
+        token->type = TOKEN_PREPROCESSOR;
+        token->value.preprocessor = GPOINTER_TO_INT(preprocessor_type);
+        token->value.string_value = strdup(buffer);
+    } else {
+        fprintf(stderr, "WRONG SINTAX: %s\n", buffer);
+        free(token);
+        return NULL;
+    }
+
+    return token;
+}
+
+
 Token* generate_punctuators(FILE* file, char first_char) {
     if (first_char == EOF) return NULL;
 
@@ -184,6 +227,9 @@ Token* generate_punctuators(FILE* file, char first_char) {
             first_char == '{' || first_char == '}' ||
             first_char == '"' || first_char == '\'' ||
             first_char == ':' || first_char == ';' ||
+            first_char == ':' || first_char == ';' ||
+            first_char == ':' || first_char == ';' ||
+            first_char == ':' || first_char == ';' ||
             first_char == '.' || first_char == ',') {
 
             buffer[index] = '\0';
@@ -206,7 +252,9 @@ Token* generate_punctuators(FILE* file, char first_char) {
                 return NULL;
             }
         }
-    } else if (current != EOF && ispunct(current) && (index < OPERATORS_SIZE - 1)) {
+    }
+
+    if (current != EOF && ispunct(current) && (index < OPERATORS_SIZE - 1)) {
         buffer[index++] = current;
         buffer[index] = '\0';
 
@@ -238,6 +286,10 @@ TokenStream* lexer(FILE* file) {
         if (isspace(current)) {
             current = fgetc(file);
             continue;
+        } else if (current == '#') {
+            Token* token_preprocessor = generate_preprocessor(file, current);
+            add_tokens_to_stream(stream, token_preprocessor);
+            printf("FOUND A PREPROCESSOR: %s\n", token_preprocessor->value.string_value);
 
         } else if (ispunct(current)) {
             Token* token_punctuator = generate_punctuators(file, current);
