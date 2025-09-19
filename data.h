@@ -18,12 +18,12 @@ typedef enum {
 
     // Indentifier and Literal
     TOKEN_PUNCTUATOR,
+    TOKEN_PREPROCESSOR,
     TOKEN_IDENTIFIER,
     TOKEN_STRING_LITERAL,
 
     // Special Tokens
     TOKEN_EOF,
-    TOKEN_ERROR,
     TOKEN_COMMENT,
 
 } TokenType;
@@ -71,8 +71,24 @@ typedef enum {
 
     // Special Keywords
     KEYWORD_SIZEOF,
-    KEYWORD_PREPROCESSOR,
 } TokenKeyword;
+
+
+typedef enum {
+    TOKEN_INCLUDE,
+    TOKEN_DEFINE,
+    TOKEN_UNDEF,
+    TOKEN_IFDEF,
+    TOKEN_IFNDEF,
+    TOKEN_SHARP_IF,
+    TOKEN_SHARP_ELSE,
+    TOKEN_SHARP_ELIF,
+    TOKEN_ENDIF,
+    TOKEN_ERROR,
+    TOKEN_WARNING,
+    TOKEN_PRAGMA,
+
+} TokenPreprocessor;
 
 
 typedef enum {
@@ -97,6 +113,10 @@ typedef enum {
     TOKEN_STAR,
     TOKEN_SLASH,
     TOKEN_PERCENT,
+
+    // Increment and Decrement
+    TOKEN_INCREMENT,
+    TOKEN_DECREMENT,
 
     // Assignment Operators
     TOKEN_ASSIGN,
@@ -140,6 +160,7 @@ typedef struct {
         double double_value;
         TokenKeyword keyword;
         TokenPunctuator punctuator;
+        TokenPreprocessor preprocessor;
     } value;
 
     int line;
@@ -183,7 +204,7 @@ void add_tokens_to_stream(TokenStream* stream, Token* token) {
 void free_tokens_stream(TokenStream* stream) {
     for (int i = 0; i < stream->count; i++) {
         Token* token = stream->tokens[i];
-        if (token->type == TOKEN_IDENTIFIER || token->type == TOKEN_PUNCTUATOR) {
+        if (token->type == TOKEN_IDENTIFIER || token->type == TOKEN_PUNCTUATOR || token->type == TOKEN_PREPROCESSOR) {
             free(token->value.string_value);
         }
         
