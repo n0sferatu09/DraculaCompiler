@@ -205,6 +205,10 @@ Token* generate_preprocessor(FILE* file, char first_char) {
 Token* generate_punctuators(FILE* file, char first_char) {
     if (first_char == EOF) return NULL;
 
+    if (!ispunct(first_char)) {
+        return NULL;
+    }
+
     Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
@@ -212,58 +216,17 @@ Token* generate_punctuators(FILE* file, char first_char) {
     int index = 0;
 
     buffer[index++] = first_char;
-    if (first_char == '(') {
-        buffer[index] = '\0';
-        token->type = TOKEN_PUNCTUATOR;
-        token->value.punctuator = TOKEN_OPEN_PAREN;
-        token->value.string_value = strdup("(");
-        return token;
-    }
 
-    char current = fgetc(file);
-    if (current != EOF && !ispunct(current)) {
-        if (first_char == ')' ||
-            first_char == '[' || first_char == ']' ||
-            first_char == '{' || first_char == '}' ||
-            first_char == '"' || first_char == '\'' ||
-            first_char == ':' || first_char == ';' ||
-            first_char == ':' || first_char == ';' ||
-            first_char == ':' || first_char == ';' ||
-            first_char == ':' || first_char == ';' ||
-            first_char == '.' || first_char == ',') {
-
-            buffer[index] = '\0';
-            ungetc(current, file);
-
-            if (operators_table == NULL) {
-                init_operators_table();
-            } 
-
-            gpointer punctuators_type = g_hash_table_lookup(operators_table, buffer);
-        
-            if (punctuators_type != NULL) {
-                token->type = TOKEN_PUNCTUATOR;
-                token->value.punctuator = GPOINTER_TO_INT(punctuators_type);
-                token->value.string_value = strdup(buffer);
-                return token;
-            } else {
-                printf("UNKNOWN OPERATOR %s", buffer);
-                free(token);
-                return NULL;
-            }
-        }
-    }
-
-    if (current != EOF && ispunct(current) && (index < OPERATORS_SIZE - 1)) {
-        buffer[index++] = current;
+    char single_char_operators[] = "()[]{};:,.";
+    if (strchr(single_char_operators, first_char) != NULL) {
         buffer[index] = '\0';
 
         if (operators_table == NULL) {
             init_operators_table();
-        } 
+        }
 
         gpointer punctuators_type = g_hash_table_lookup(operators_table, buffer);
-        
+
         if (punctuators_type != NULL) {
             token->type = TOKEN_PUNCTUATOR;
             token->value.punctuator = GPOINTER_TO_INT(punctuators_type);
@@ -272,6 +235,53 @@ Token* generate_punctuators(FILE* file, char first_char) {
         }
     }
 
+    if (first_char != EOF && ispunct(first_char) && (index < OPERATORS_SIZE - 1)) {
+        char current = fgetc(file);
+
+        if (current != EOF && ispunct(current) && (index < OPERATORS_SIZE - 1)) {
+            buffer[index++] = current;
+            buffer[index] = '\0';
+
+            if (operators_table == NULL) {
+                init_operators_table();
+            } 
+
+            gpointer punctuators_type = g_hash_table_lookup(operators_table, buffer);
+
+            if (punctuators_type != NULL) {
+                token->type = TOKEN_PUNCTUATOR;
+                token->value.punctuator = GPOINTER_TO_INT(punctuators_type);
+                token->value.string_value = strdup(buffer);
+                return token;
+            } else {
+                fprintf(stderr, "UNKNOWN PUNCTUATOR: %s\n", buffer);
+                free(token);
+                return NULL;
+            }
+
+        } else {
+            ungetc(current, file);
+
+            if (operators_table == NULL) {
+                init_operators_table();
+            } 
+
+            gpointer punctuators_type = g_hash_table_lookup(operators_table, buffer);
+
+            if (punctuators_type != NULL) {
+                token->type = TOKEN_PUNCTUATOR;
+                token->value.punctuator = GPOINTER_TO_INT(punctuators_type);
+                token->value.string_value = strdup(buffer);
+                return token;
+            } else {
+                fprintf(stderr, "UNKNOWN PUNCTUATOR: %s\n", buffer);
+                free(token);
+                return NULL;
+            }
+        }
+    }
+
+    fprintf(stderr, "UNKNOWN PUNCTUATOR: %s\n", buffer);
     free(token);
     return NULL;
 }
