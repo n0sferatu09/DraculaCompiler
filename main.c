@@ -193,7 +193,7 @@ Token* generate_preprocessor(FILE* file, char first_char) {
         token->value.preprocessor = GPOINTER_TO_INT(preprocessor_type);
         token->value.string_value = strdup(buffer);
     } else {
-        fprintf(stderr, "WRONG SINTAX: %s\n", buffer);
+        fprintf(stderr, "UNKNOWN PREPROCESSOR DIRECTIVE: %s\n", buffer);
         free(token);
         return NULL;
     }
@@ -288,13 +288,19 @@ TokenStream* lexer(FILE* file) {
             continue;
         } else if (current == '#') {
             Token* token_preprocessor = generate_preprocessor(file, current);
-            add_tokens_to_stream(stream, token_preprocessor);
-            printf("FOUND A PREPROCESSOR: %s\n", token_preprocessor->value.string_value);
+
+            if (token_preprocessor != NULL) {
+                add_tokens_to_stream(stream, token_preprocessor);
+                printf("FOUND A PREPROCESSOR: %s\n", token_preprocessor->value.string_value);
+            }
 
         } else if (ispunct(current)) {
             Token* token_punctuator = generate_punctuators(file, current);
-            add_tokens_to_stream(stream, token_punctuator);
-            printf("FOUND A OPERATOR: %s\n", token_punctuator->value.string_value);
+            
+            if (token_punctuator != NULL) {
+                add_tokens_to_stream(stream, token_punctuator);
+                printf("FOUND A OPERATOR: %s\n", token_punctuator->value.string_value);
+            }
 
         } else if (isdigit(current)) {
             Token* token_number = generate_numbers(file, current);
@@ -330,10 +336,11 @@ TokenStream* lexer(FILE* file) {
 
 int main() {
     FILE* file;
-    file = fopen("test.unn", "r");
+    file = fopen("test.c", "r");
 
     init_keyword_table();
     init_operators_table();
+    init_preprocessor_table();
 
     if (file == NULL) {
         printf("Error: cannot open file\n");
