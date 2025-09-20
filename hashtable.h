@@ -10,7 +10,9 @@ void init_keyword_table() {
         return;
     }
 
-    keywords_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    if (keywords_table == NULL) {
+        keywords_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    }
 
     // Logical Keywords
     g_hash_table_insert(keywords_table, g_strdup("if"), GINT_TO_POINTER(KEYWORD_IF));
@@ -62,19 +64,22 @@ void init_preprocessor_table() {
         return;
     }
 
-    preprocessor_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    if (preprocessor_table == NULL) {
+        preprocessor_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    }
 
-    g_hash_table_insert(keywords_table, g_strdup("#include"), GINT_TO_POINTER(TOKEN_INCLUDE));
-    g_hash_table_insert(keywords_table, g_strdup("#define"), GINT_TO_POINTER(TOKEN_UNDEF));
-    g_hash_table_insert(keywords_table, g_strdup("#ifdef"), GINT_TO_POINTER(TOKEN_IFDEF));
-    g_hash_table_insert(keywords_table, g_strdup("#ifndef"), GINT_TO_POINTER(TOKEN_IFNDEF));
-    g_hash_table_insert(keywords_table, g_strdup("#if"), GINT_TO_POINTER(TOKEN_SHARP_IF));
-    g_hash_table_insert(keywords_table, g_strdup("#else"), GINT_TO_POINTER(TOKEN_SHARP_ELSE));
-    g_hash_table_insert(keywords_table, g_strdup("#elif"), GINT_TO_POINTER(TOKEN_SHARP_ELIF));
-    g_hash_table_insert(keywords_table, g_strdup("#endif"), GINT_TO_POINTER(TOKEN_ENDIF));
-    g_hash_table_insert(keywords_table, g_strdup("#error"), GINT_TO_POINTER(TOKEN_ERROR));
-    g_hash_table_insert(keywords_table, g_strdup("#warning"), GINT_TO_POINTER(TOKEN_WARNING));
-    g_hash_table_insert(keywords_table, g_strdup("#pragma"), GINT_TO_POINTER(TOKEN_PRAGMA));
+    g_hash_table_insert(preprocessor_table, g_strdup("#include"), GINT_TO_POINTER(TOKEN_INCLUDE));
+    g_hash_table_insert(preprocessor_table, g_strdup("#define"), GINT_TO_POINTER(TOKEN_DEFINE));
+    g_hash_table_insert(preprocessor_table, g_strdup("#undef"), GINT_TO_POINTER(TOKEN_UNDEF));
+    g_hash_table_insert(preprocessor_table, g_strdup("#ifdef"), GINT_TO_POINTER(TOKEN_IFDEF));
+    g_hash_table_insert(preprocessor_table, g_strdup("#ifndef"), GINT_TO_POINTER(TOKEN_IFNDEF));
+    g_hash_table_insert(preprocessor_table, g_strdup("#if"), GINT_TO_POINTER(TOKEN_SHARP_IF));
+    g_hash_table_insert(preprocessor_table, g_strdup("#else"), GINT_TO_POINTER(TOKEN_SHARP_ELSE));
+    g_hash_table_insert(preprocessor_table, g_strdup("#elif"), GINT_TO_POINTER(TOKEN_SHARP_ELIF));
+    g_hash_table_insert(preprocessor_table, g_strdup("#endif"), GINT_TO_POINTER(TOKEN_ENDIF));
+    g_hash_table_insert(preprocessor_table, g_strdup("#error"), GINT_TO_POINTER(TOKEN_ERROR));
+    g_hash_table_insert(preprocessor_table, g_strdup("#warning"), GINT_TO_POINTER(TOKEN_WARNING));
+    g_hash_table_insert(preprocessor_table, g_strdup("#pragma"), GINT_TO_POINTER(TOKEN_PRAGMA));
 }
 
 
@@ -82,9 +87,11 @@ void init_operators_table() {
     if (operators_table != NULL) {
         return;
     }
-
-    operators_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-
+    
+    if (operators_table == NULL) {
+        operators_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    }
+    
     // Arithmetic Operators
     g_hash_table_insert(operators_table, g_strdup("+"), GINT_TO_POINTER(TOKEN_PLUS));
     g_hash_table_insert(operators_table, g_strdup("-"), GINT_TO_POINTER(TOKEN_MINUS));
