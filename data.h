@@ -7,6 +7,8 @@
 
 
 typedef enum {
+    ENUM_START_MARKER,
+
     // Basic DataType
     TOKEN_INT,
     TOKEN_CHAR,
@@ -30,6 +32,8 @@ typedef enum {
 
 
 typedef enum {
+    KEYWORD_START_MARKER,
+    
     // Logical Keywords
     KEYWORD_IF,
     KEYWORD_ELSE,
@@ -75,6 +79,9 @@ typedef enum {
 
 
 typedef enum {
+    PREPROCESSOR_START_MARKER,
+    
+    // Preprocessor Directive
     TOKEN_INCLUDE,
     TOKEN_DEFINE,
     TOKEN_UNDEF,
@@ -92,6 +99,8 @@ typedef enum {
 
 
 typedef enum {
+    PUNCTUATOR_START_MARKER,
+    
     // Separators
     TOKEN_OPEN_PAREN,
     TOKEN_CLOSE_PAREN,
@@ -186,6 +195,8 @@ TokenStream* init_tokens_stream() {
 
 
 void add_tokens_to_stream(TokenStream* stream, Token* token) {
+    if (token == NULL) return;
+
     if (stream->count >= stream->capacity) {
         stream->capacity *= 2;
         stream->tokens = realloc(stream->tokens, sizeof(Token*) * stream->capacity);
