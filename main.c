@@ -120,18 +120,49 @@ Token* generate_keywords(FILE* file, char first_letter) {
     Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
-    char buffer[KEYWORD_SIZE + 1] = {0};
+    int capacity = 8;
     int index = 0;
+    char* buffer = malloc(sizeof(char) * capacity);
+    if (buffer == NULL) {
+        free(token);
+        return NULL;
+    }
 
     buffer[index++] = first_letter;
 
     char current = fgetc(file);
 
-    while(isalpha(current) && current != EOF) {
-        if (index < KEYWORD_SIZE - 1) {
-            buffer[index++] = current;
+    while(current != EOF && (isalnum(current) || current == '_')) {
+        if (index >= capacity) {
+            capacity *= 2;
+            char* new_buffer = realloc(buffer, sizeof(char) * capacity);
+
+            if (new_buffer == NULL) {
+                printf("Memory reallocation error\n");
+                free(buffer);
+                free(token);
+                return NULL;
+            }
+
+            buffer = new_buffer;
         }
+
+        buffer[index++] = current;
         current = fgetc(file);
+    }
+
+    if (index >= capacity) {
+        capacity++;
+        char* new_buffer = realloc(buffer, sizeof(char) * capacity);
+
+        if (new_buffer == NULL) {
+            printf("Memory reallocation error\n");
+            free(buffer);
+            free(token);
+            return NULL;
+        }
+
+        buffer = new_buffer;
     }
 
     buffer[index] = '\0';
@@ -205,10 +236,6 @@ Token* generate_preprocessor(FILE* file, char first_char) {
 Token* generate_punctuators(FILE* file, char first_char) {
     if (first_char == EOF) return NULL;
 
-    if (!ispunct(first_char)) {
-        return NULL;
-    }
-
     Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
@@ -217,8 +244,8 @@ Token* generate_punctuators(FILE* file, char first_char) {
 
     buffer[index++] = first_char;
 
-    char single_char_operators[] = "()[]{};:,.";
-    if (strchr(single_char_operators, first_char) != NULL) {
+    char single_punctuators[] = "( ) [ ] { } \" ' ; : , .";
+    if (strchr(single_punctuators, first_char)) {
         buffer[index] = '\0';
 
         if (operators_table == NULL) {
@@ -233,57 +260,37 @@ Token* generate_punctuators(FILE* file, char first_char) {
             token->value.string_value = strdup(buffer);
             return token;
         }
+    } 
+
+    char current = fgetc(file);
+    while (current != EOF && ispunct(current)) {
+        buffer[index++] = current;
+        current = fgetc(file);
     }
 
-    if (first_char != EOF && ispunct(first_char) && (index < OPERATORS_SIZE - 1)) {
-        char current = fgetc(file);
+    buffer[index] = '\0';
 
-        if (current != EOF && ispunct(current) && (index < OPERATORS_SIZE - 1)) {
-            buffer[index++] = current;
-            buffer[index] = '\0';
-
-            if (operators_table == NULL) {
-                init_operators_table();
-            } 
-
-            gpointer punctuators_type = g_hash_table_lookup(operators_table, buffer);
-
-            if (punctuators_type != NULL) {
-                token->type = TOKEN_PUNCTUATOR;
-                token->value.punctuator = GPOINTER_TO_INT(punctuators_type);
-                token->value.string_value = strdup(buffer);
-                return token;
-            } else {
-                fprintf(stderr, "UNKNOWN PUNCTUATOR: %s\n", buffer);
-                free(token);
-                return NULL;
-            }
-
-        } else {
-            ungetc(current, file);
-
-            if (operators_table == NULL) {
-                init_operators_table();
-            } 
-
-            gpointer punctuators_type = g_hash_table_lookup(operators_table, buffer);
-
-            if (punctuators_type != NULL) {
-                token->type = TOKEN_PUNCTUATOR;
-                token->value.punctuator = GPOINTER_TO_INT(punctuators_type);
-                token->value.string_value = strdup(buffer);
-                return token;
-            } else {
-                fprintf(stderr, "UNKNOWN PUNCTUATOR: %s\n", buffer);
-                free(token);
-                return NULL;
-            }
-        }
+    if (current != EOF && !ispunct(current)) {
+        ungetc(current, file);
     }
 
-    fprintf(stderr, "UNKNOWN PUNCTUATOR: %s\n", buffer);
-    free(token);
-    return NULL;
+    if (operators_table == NULL) {
+        init_operators_table();
+    }
+
+    gpointer punctuators_type = g_hash_table_lookup(operators_table, buffer);
+    
+    if (punctuators_type != NULL) {
+        token->type = TOKEN_PUNCTUATOR;
+        token->value.punctuator = GPOINTER_TO_INT(punctuators_type);
+        token->value.string_value = strdup(buffer);
+    } else {
+        fprintf(stderr, "UNKNOWN OPERATOR: %s\n", buffer);
+        free(token);
+        return NULL;
+    }
+
+    return token;
 }
 
 
@@ -296,20 +303,13 @@ TokenStream* lexer(FILE* file) {
         if (isspace(current)) {
             current = fgetc(file);
             continue;
+
         } else if (current == '#') {
             Token* token_preprocessor = generate_preprocessor(file, current);
 
             if (token_preprocessor != NULL) {
                 add_tokens_to_stream(stream, token_preprocessor);
                 printf("FOUND A PREPROCESSOR: %s\n", token_preprocessor->value.string_value);
-            }
-
-        } else if (ispunct(current)) {
-            Token* token_punctuator = generate_punctuators(file, current);
-            
-            if (token_punctuator != NULL) {
-                add_tokens_to_stream(stream, token_punctuator);
-                printf("FOUND A OPERATOR: %s\n", token_punctuator->value.string_value);
             }
 
         } else if (isdigit(current)) {
@@ -326,7 +326,7 @@ TokenStream* lexer(FILE* file) {
                 printf("UNKNOWN NUMBER\n");
             }
 
-        } else if (isalpha(current)) {
+        } else if (isalpha(current) || current == '_') {
             Token* token_keyword = generate_keywords(file, current);
             add_tokens_to_stream(stream, token_keyword);
 
@@ -335,6 +335,16 @@ TokenStream* lexer(FILE* file) {
             } else {
                 printf("FOUND A IDENTIFIER: %s\n", token_keyword->value.string_value);
             }
+
+        } else if (ispunct(current)) {
+            Token* token_punctuator = generate_punctuators(file, current);
+            
+            if (token_punctuator != NULL) {
+                add_tokens_to_stream(stream, token_punctuator);
+                printf("FOUND A OPERATOR: %s\n", token_punctuator->value.string_value);
+            }
+
+
         }
 
         current = fgetc(file);
@@ -346,7 +356,7 @@ TokenStream* lexer(FILE* file) {
 
 int main() {
     FILE* file;
-    file = fopen("test.c", "r");
+    file = fopen("main.c", "r");
 
     init_keyword_table();
     init_operators_table();
