@@ -155,6 +155,10 @@ typedef enum {
     TOKEN_BIT_NOT,
     TOKEN_LEFT_SHIFT,
     TOKEN_RIGHT_SHIFT,   
+    TOKEN_BIT_AND_EQUALS,
+    TOKEN_BIT_OR_EQUALS,
+    TOKEN_BIT_XOR,
+
 
 } TokenPunctuator;
 
