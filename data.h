@@ -25,7 +25,6 @@ typedef enum {
     TOKEN_STRING_LITERAL,
 
     // Special Tokens
-    TOKEN_EOF,
     TOKEN_COMMENT,
 
 } TokenType;
@@ -71,7 +70,6 @@ typedef enum {
     // Constants
     KEYWORD_TRUE,
     KEYWORD_FALSE,
-    KEYWORD_NULL,
 
     // Special Keywords
     KEYWORD_SIZEOF,
@@ -113,8 +111,10 @@ typedef enum {
     TOKEN_SEMICOLON,
     TOKEN_COLON,
     TOKEN_COMMA,
-    TOKEN_DOT,
 
+    // Success Operators
+    TOKEN_DOT,
+    TOKEN_ARROW,
 
     // Arithmetic Operators
     TOKEN_PLUS,
@@ -157,8 +157,9 @@ typedef enum {
     TOKEN_RIGHT_SHIFT,   
     TOKEN_BIT_AND_EQUALS,
     TOKEN_BIT_OR_EQUALS,
-    TOKEN_BIT_XOR,
-
+    TOKEN_BIT_XOR_EQUALS,
+    TOKEN_LEFT_SHIFT_EQUALS,
+    TOKEN_RIGHT_SHIFT_EQUALS,
 
 } TokenPunctuator;
 
