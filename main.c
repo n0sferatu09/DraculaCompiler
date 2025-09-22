@@ -8,8 +8,15 @@ Token* generate_numbers(FILE* file, char first_number) {
     Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
+    int capacity = 2;
     int index = 0;
-    char buffer[BUFFER_SIZE] = {0};
+    char* buffer = malloc(sizeof(char) * capacity);
+
+    if (buffer == NULL) {
+        fprintf(stderr, "Memory allocation failed!\n");
+        free(token);
+        return NULL;
+    }
 
     int has_decimal_point = 0;
     int has_exponent = 0;
@@ -24,6 +31,20 @@ Token* generate_numbers(FILE* file, char first_number) {
             current == 'e' || current == 'E' ||
             current == 'f' || current == 'F' ||
             current == 'd' || current == 'D')) {
+
+        if (index >= capacity) {
+            capacity *= 2;
+            char* new_buffer = realloc(buffer, sizeof(char) * capacity);
+
+            if (new_buffer == NULL) {
+                fprintf(stderr, "Memory reallocation failed!\n");
+                free(buffer);
+                free(token);
+                return NULL;
+            }
+
+            buffer = new_buffer;
+        }
 
         if (current == '.') {
             if (has_decimal_point) break;
@@ -67,8 +88,21 @@ Token* generate_numbers(FILE* file, char first_number) {
         current = fgetc(file);
     }
 
+    if (index >= capacity) {
+        capacity++;
+        char* new_buffer = realloc(buffer, sizeof(char) * capacity);
+
+        if (new_buffer == NULL) {
+            fprintf(stderr, "Memory reallocation failed!\n");
+            free(buffer);
+            free(token);
+            return NULL;
+        }
+
+        buffer = new_buffer;
+    }
+
     buffer[index] = '\0';
-    
 
     if (current != EOF && !isdigit(current) && !has_decimal_point) {
         ungetc(current, file);
@@ -178,22 +212,68 @@ Token* generate_string(FILE* file, char first_letter) {
 } 
 
 
+Token* generate_comments(FILE* file, char first_char) {
+    if (first_char == EOF) return NULL;
+
+    Token* token = malloc(sizeof(*token));
+    if (token == NULL) return NULL;
+
+    int capacity = 3;
+    int index = 0;
+    char* buffer = malloc(sizeof(char) * capacity);
+}
+
+
 Token* generate_keywords(FILE* file, char first_letter) {
     if (first_letter == EOF) return NULL;
 
     Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
+    int capacity = 3;
     int index = 0;
-    char buffer[KEYWORD_SIZE + 1] = {0};
+    char* buffer = malloc(sizeof(char) * capacity);
+
+    if (buffer == NULL) {
+        fprintf(stderr, "Memory allocation failed!\n");
+        free(token);
+        return NULL;
+    }
 
     buffer[index++] = first_letter;
 
     char current = fgetc(file);
 
     while(current != EOF && (isalnum(current) || current == '_')) {
+        if (index >= capacity) {
+            capacity *= 2;
+            char* new_buffer = realloc(buffer, sizeof(char) * capacity);
+
+            if (new_buffer == NULL) {
+                fprintf(stderr, "Memory reallocation failed!\n");
+                free(buffer);
+                free(token);
+                return NULL;
+            }
+
+            buffer = new_buffer;
+        }
+
         buffer[index++] = current;
         current = fgetc(file);
+    }
+    if (index >= capacity) {
+        capacity++; 
+        char* new_buffer = realloc(buffer, sizeof(char) * capacity);
+
+        if (new_buffer == NULL) {
+            fprintf(stderr, "Memory reallocation failed!\n");
+            free(buffer);
+            free(token);
+            return NULL;
+        }
+
+        buffer = new_buffer;
     }
 
     buffer[index] = '\0';
@@ -348,6 +428,17 @@ TokenStream* lexer(FILE* file) {
         if (isspace(current)) {
             current = fgetc(file);
             continue;
+
+        } else if (current == '/') { 
+            current = fgetc(file);
+            
+            int capacity = 3;
+            int index = 0;
+            char* buffer = malloc(sizeof(char) * capacity);
+
+            if (current == '/') {
+                Token* token_comment = generate_comments(file, current);
+            }
 
         } else if (current == '"') {
             Token* token_string = generate_string(file, current);
