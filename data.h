@@ -228,5 +228,4 @@ void free_tokens_stream(TokenStream* stream) {
     }
 
     free(stream->tokens);
-    free(stream);
 }
