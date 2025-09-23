@@ -24,7 +24,8 @@ git clone https://github.com/n0sferatu09/DraculaCompiler.git
 
 ```
 
-**For operation:**
+## For operation:
+
 ####  1. Open the main.c file.
 
 ####  2. In the main function, find the line of code:
