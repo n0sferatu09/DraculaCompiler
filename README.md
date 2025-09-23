@@ -25,14 +25,20 @@ git clone https://github.com/n0sferatu09/DraculaCompiler.git
 ```
 
 **For operation:**
-1. Open the main.c file.
-2. In the main function, find the line of code:
+####  1. Open the main.c file.
+
+####  2. In the main function, find the line of code:
+
 ```C
-file = fopen("filename.c", "r");
+    file = fopen("filename.c", "r");
 ```
-3. Replace "filename.c" with your file.
-4. Enter in the terminal:
+
+#### 3. Replace "filename.c" with your file.
+
+#### 4. Enter in the terminal:
+
 ```Shell
-./build.sh
+    ./build.sh
 ```
-5. Open the main.c file.
+
+#### 5. Open the main.c file.
