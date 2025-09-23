@@ -8,8 +8,10 @@ Token* generate_numbers(FILE* file, char first_number) {
     Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
-    char buffer[BUFFER_SIZE + 1] = {0};
     int index = 0;
+    int capacity = 8;
+    char* buffer = malloc(sizeof(char) * capacity);
+
     int has_decimal_point = 0;
     int has_exponent = 0;
     int has_float_suffix = 0;
@@ -23,6 +25,21 @@ Token* generate_numbers(FILE* file, char first_number) {
             current == 'e' || current == 'E' ||
             current == 'f' || current == 'F' ||
             current == 'd' || current == 'D')) {
+
+        if (index >= capacity) {
+            capacity *= 2;
+            char *new_buffer = realloc(buffer, sizeof(char) * capacity);
+
+
+            if (new_buffer == NULL) {
+                fprintf(stderr, "Memory reallocation failed!\n");
+                free(buffer);
+                free(token);
+                return NULL;
+            }
+
+            buffer = new_buffer;
+        }
 
         if (current == '.') {
             if (has_decimal_point) break;
@@ -62,14 +79,24 @@ Token* generate_numbers(FILE* file, char first_number) {
             token->type = TOKEN_FLOAT;
         }
 
-        if (index < BUFFER_SIZE) {
-            buffer[index++] = current;
-        }
-
+        buffer[index++] = current;
         current = fgetc(file);
     }
 
+    if (index >= capacity) {
+        capacity++;
+        char* new_buffer = realloc(buffer, sizeof(char) * capacity);   
+
+        if (new_buffer == NULL) {
+            fprintf(stderr, "Memory reallocation failed!\n");
+            free(buffer);
+            free(token);
+            return NULL;
+        }
+    }
+
     buffer[index] = '\0';
+    
 
     if (current != EOF && !isdigit(current) && !has_decimal_point) {
         ungetc(current, file);
@@ -120,49 +147,16 @@ Token* generate_keywords(FILE* file, char first_letter) {
     Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
-    int capacity = 8;
     int index = 0;
-    char* buffer = malloc(sizeof(char) * capacity);
-    if (buffer == NULL) {
-        free(token);
-        return NULL;
-    }
+    char buffer[KEYWORD_SIZE + 1] = {0};
 
     buffer[index++] = first_letter;
 
     char current = fgetc(file);
 
     while(current != EOF && (isalnum(current) || current == '_')) {
-        if (index >= capacity) {
-            capacity *= 2;
-            char* new_buffer = realloc(buffer, sizeof(char) * capacity);
-
-            if (new_buffer == NULL) {
-                printf("Memory reallocation error\n");
-                free(buffer);
-                free(token);
-                return NULL;
-            }
-
-            buffer = new_buffer;
-        }
-
         buffer[index++] = current;
         current = fgetc(file);
-    }
-
-    if (index >= capacity) {
-        capacity++;
-        char* new_buffer = realloc(buffer, sizeof(char) * capacity);
-
-        if (new_buffer == NULL) {
-            printf("Memory reallocation error\n");
-            free(buffer);
-            free(token);
-            return NULL;
-        }
-
-        buffer = new_buffer;
     }
 
     buffer[index] = '\0';
@@ -196,13 +190,27 @@ Token* generate_preprocessor(FILE* file, char first_char) {
     Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
-    char buffer[PREPROCESSOR_SIZE + 1] = {0};
+    int capacity = 8;
     int index = 0;
+    char* buffer = malloc(sizeof(char) * capacity);
 
     buffer[index++] = first_char;
 
     char current = fgetc(file);
     while (current != EOF && isalpha(current) && (index < PREPROCESSOR_SIZE - 1)) {
+        if (index >= capacity) {
+            capacity *= 2;
+            char* new_buffer = realloc(buffer, sizeof(char) * capacity);
+
+            if (new_buffer == NULL) {
+                fprintf(stderr, "Memory reallocation failed!\n");
+                free(buffer);
+                free(token);
+                return NULL;
+            }
+
+            buffer = new_buffer;
+        }
         buffer[index++] = current;
         current = fgetc(file);
     }
@@ -356,7 +364,7 @@ TokenStream* lexer(FILE* file) {
 
 int main() {
     FILE* file;
-    file = fopen("main.c", "r");
+    file = fopen("test.c", "r");
 
     init_keyword_table();
     init_operators_table();
