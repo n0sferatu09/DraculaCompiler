@@ -9,8 +9,7 @@ Token* generate_numbers(FILE* file, char first_number) {
     if (token == NULL) return NULL;
 
     int index = 0;
-    int capacity = 8;
-    char* buffer = malloc(sizeof(char) * capacity);
+    char buffer[BUFFER_SIZE] = {0};
 
     int has_decimal_point = 0;
     int has_exponent = 0;
@@ -25,21 +24,6 @@ Token* generate_numbers(FILE* file, char first_number) {
             current == 'e' || current == 'E' ||
             current == 'f' || current == 'F' ||
             current == 'd' || current == 'D')) {
-
-        if (index >= capacity) {
-            capacity *= 2;
-            char *new_buffer = realloc(buffer, sizeof(char) * capacity);
-
-
-            if (new_buffer == NULL) {
-                fprintf(stderr, "Memory reallocation failed!\n");
-                free(buffer);
-                free(token);
-                return NULL;
-            }
-
-            buffer = new_buffer;
-        }
 
         if (current == '.') {
             if (has_decimal_point) break;
@@ -81,18 +65,6 @@ Token* generate_numbers(FILE* file, char first_number) {
 
         buffer[index++] = current;
         current = fgetc(file);
-    }
-
-    if (index >= capacity) {
-        capacity++;
-        char* new_buffer = realloc(buffer, sizeof(char) * capacity);   
-
-        if (new_buffer == NULL) {
-            fprintf(stderr, "Memory reallocation failed!\n");
-            free(buffer);
-            free(token);
-            return NULL;
-        }
     }
 
     buffer[index] = '\0';
