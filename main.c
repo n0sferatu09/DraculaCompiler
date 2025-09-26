@@ -8,7 +8,7 @@ Token* generate_numbers(FILE* file, char first_number) {
     Token* token = malloc(sizeof(*token));
     if (token == NULL) return NULL;
 
-    int capacity = 2;
+    int capacity = 3;
     int index = 0;
     char* buffer = malloc(sizeof(char) * capacity);
 
@@ -186,7 +186,7 @@ Token* generate_string(FILE* file, char first_letter) {
     }
 
     if (index >= capacity) {
-        capacity += 2;
+        capacity++;
         char* new_buffer = realloc(buffer, sizeof(char) * capacity);
 
         if (new_buffer == NULL) {
