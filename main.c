@@ -9,6 +9,10 @@ void skip_single_line_comments(FILE* file) {
         current = fgetc(file);
     }
 
+    if (current == '\n') {
+        current_line++;
+    }
+
     if (current != EOF && current != '\n') {
         ungetc(current, file);
     }
@@ -19,6 +23,10 @@ void skip_multi_line_comments(FILE* file) {
     int current = fgetc(file);
 
     while (current != EOF) {
+        if (current == '\n') {
+            current_line++;
+        }
+
         if (current == '*') {
             int next = fgetc(file);
             if (next == '/') {
@@ -30,7 +38,7 @@ void skip_multi_line_comments(FILE* file) {
         current = fgetc(file);
     }
 
-    printf("ERROR: Unclosed commnets!\n");
+    printf("ERROR: Unclosed commnets at line %d!\n", current_line);
 }
 
 
@@ -164,7 +172,7 @@ Token* generate_numbers(FILE* file, int first_number) {
     }
 
     if (*endchar != '\0') {
-        fprintf(stderr, "Invalid number: extra characters '%s'\n", endchar);
+        fprintf(stderr, "%d | Invalid number: extra characters '%s'\n", current_line, endchar);
         free(token);
         return NULL;
     }
@@ -266,6 +274,7 @@ Token* generate_keywords(FILE* file, int first_letter) {
     char current = fgetc(file);
 
     while(current != EOF && (isalnum(current) || current == '_')) {
+
         if (index >= capacity) {
             capacity *= 2;
             char* new_buffer = realloc(buffer, sizeof(char) * capacity);
@@ -283,6 +292,7 @@ Token* generate_keywords(FILE* file, int first_letter) {
         buffer[index++] = current;
         current = fgetc(file);
     }
+    
     if (index >= capacity) {
         capacity++; 
         char* new_buffer = realloc(buffer, sizeof(char) * capacity);
@@ -447,6 +457,9 @@ TokenStream* lexer(FILE* file) {
     
     while (current != EOF) {
         if (isspace(current)) {
+            if (current == '\n') {
+                current_line++;    
+            }
             current = fgetc(file);
             continue;
 
@@ -462,8 +475,9 @@ TokenStream* lexer(FILE* file) {
 
                 Token* token_punctuator = generate_punctuators(file, current);
                 if (token_punctuator != NULL) {
+                    token_punctuator->line = current_line;
                     add_tokens_to_stream(stream, token_punctuator);
-                    printf("FOUND A OPERATOR: %s\n", token_punctuator->value.string_value);
+                    printf("%d | FOUND A OPERATOR: %s\n", current_line, token_punctuator->value.string_value);
                 }
             }
 
@@ -471,48 +485,57 @@ TokenStream* lexer(FILE* file) {
             Token* token_string = generate_string(file, current);
 
             if (token_string != NULL) {
+                token_string->line = current_line;
                 add_tokens_to_stream(stream, token_string);
-                printf("FOUND A STRING: %s\n", token_string->value.string_value);
+                printf("%d | FOUND A STRING: %s\n", current_line, token_string->value.string_value);
             }
             
         } else if (current == '#') {
             Token* token_preprocessor = generate_preprocessor(file, current);
 
             if (token_preprocessor != NULL) {
+                token_preprocessor->line = current_line;
                 add_tokens_to_stream(stream, token_preprocessor);
-                printf("FOUND A PREPROCESSOR: %s\n", token_preprocessor->value.string_value);
+                printf("%d | FOUND A PREPROCESSOR: %s\n", current_line, token_preprocessor->value.string_value);
             }
 
         } else if (isdigit(current)) {
             Token* token_number = generate_numbers(file, current);
-            add_tokens_to_stream(stream, token_number);
+            if (token_number != NULL) {
+                token_number->line = current_line;
+                add_tokens_to_stream(stream, token_number);
+            }
 
             if (token_number->type == TOKEN_INT) {
-                printf("FOUND INTEGER NUMBER %d\n", token_number->value.int_value);
+                printf("%d | FOUND INTEGER NUMBER: %d\n", current_line, token_number->value.int_value);
             } else if (token_number->type == TOKEN_DOUBLE) {
-                printf("FOUND DOUBLE NUMBER %lf\n", token_number->value.double_value);
+                printf("%d | FOUND DOUBLE NUMBER: %lf\n", current_line, token_number->value.double_value);
             } else if (token_number->type == TOKEN_FLOAT) {
-                printf("FOUND FLOAT NUMBER %f\n", token_number->value.float_value);
+                printf("%d | FOUND FLOAT NUMBER: %f\n", current_line, token_number->value.float_value);
             } else {
-                printf("UNKNOWN NUMBER\n");
+                printf("%d | UNKNOWN NUMBER\n", current_line);
             }
 
         } else if (isalpha(current) || current == '_') {
             Token* token_keyword = generate_keywords(file, current);
-            add_tokens_to_stream(stream, token_keyword);
+            if (token_keyword != NULL) {
+                token_keyword->line = current_line;
+                add_tokens_to_stream(stream, token_keyword);
+            }
 
             if (token_keyword->type == TOKEN_KEYWORD) {
-                printf("FOUND A KEYWORD: %s\n", token_keyword->value.string_value);
+                printf("%d | FOUND A KEYWORD: %s\n", current_line, token_keyword->value.string_value);
             } else {
-                printf("FOUND A IDENTIFIER: %s\n", token_keyword->value.string_value);
+                printf("%d | FOUND A IDENTIFIER: %s\n", current_line, token_keyword->value.string_value);
             }
 
         } else if (ispunct(current)) {
             Token* token_punctuator = generate_punctuators(file, current);
             
             if (token_punctuator != NULL) {
+                token_punctuator->line = current_line;
                 add_tokens_to_stream(stream, token_punctuator);
-                printf("FOUND A OPERATOR: %s\n", token_punctuator->value.string_value);
+                printf("%d | FOUND A OPERATOR: %s\n", current_line, token_punctuator->value.string_value);
             }
 
 
