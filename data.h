@@ -5,6 +5,8 @@
 #include <errno.h>
 #include <glib.h>
 
+int current_line = 1;
+
 
 typedef enum {
     ENUM_START_MARKER,
@@ -111,6 +113,7 @@ typedef enum {
     TOKEN_SEMICOLON,
     TOKEN_COLON,
     TOKEN_COMMA,
+    TOKEN_QUESTION,
 
     // Success Operators
     TOKEN_DOT,
@@ -178,7 +181,6 @@ typedef struct {
     } value;
 
     int line;
-    int column;
 } Token;
 
 
