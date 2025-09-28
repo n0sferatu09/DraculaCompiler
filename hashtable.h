@@ -150,6 +150,7 @@ void init_operators_table() {
     g_hash_table_insert(operators_table, g_strdup(";"), GINT_TO_POINTER(TOKEN_SEMICOLON));
     g_hash_table_insert(operators_table, g_strdup(":"), GINT_TO_POINTER(TOKEN_COLON));
     g_hash_table_insert(operators_table, g_strdup(","), GINT_TO_POINTER(TOKEN_COMMA));
+    g_hash_table_insert(operators_table, g_strdup("?"), GINT_TO_POINTER(TOKEN_QUESTION));
 
     // Success Operators
     g_hash_table_insert(operators_table, g_strdup("."), GINT_TO_POINTER(TOKEN_DOT));
