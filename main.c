@@ -2,7 +2,39 @@
 #include "defs.h"
 
 
-Token* generate_numbers(FILE* file, char first_number) {
+void skip_single_line_comments(FILE* file) {
+    int current = fgetc(file);
+
+    while (current != EOF && current != '\n') {
+        current = fgetc(file);
+    }
+
+    if (current != EOF && current != '\n') {
+        ungetc(current, file);
+    }
+}
+
+
+void skip_multi_line_comments(FILE* file) {
+    int current = fgetc(file);
+
+    while (current != EOF) {
+        if (current == '*') {
+            int next = fgetc(file);
+            if (next == '/') {
+                return;
+            }
+            ungetc(next, file);
+        }
+
+        current = fgetc(file);
+    }
+
+    printf("ERROR: Unclosed commnets!\n");
+}
+
+
+Token* generate_numbers(FILE* file, int first_number) {
     if (first_number == EOF) return NULL;
 
     Token* token = malloc(sizeof(*token));
@@ -10,7 +42,7 @@ Token* generate_numbers(FILE* file, char first_number) {
 
     int capacity = 3;
     int index = 0;
-    char* buffer = malloc(sizeof(char) * capacity);
+    char* buffer = malloc(sizeof(int) * capacity);
 
     if (buffer == NULL) {
         fprintf(stderr, "Memory allocation failed!\n");
@@ -25,7 +57,7 @@ Token* generate_numbers(FILE* file, char first_number) {
     token->type = TOKEN_INT;
     buffer[index++] = first_number;
 
-    char current = fgetc(file);
+    int current = fgetc(file);
     while (current != EOF && (isdigit(current) ||
             current == '.' ||
             current == 'e' || current == 'E' ||
@@ -34,7 +66,7 @@ Token* generate_numbers(FILE* file, char first_number) {
 
         if (index >= capacity) {
             capacity *= 2;
-            char* new_buffer = realloc(buffer, sizeof(char) * capacity);
+            char* new_buffer = realloc(buffer, sizeof(int) * capacity);
 
             if (new_buffer == NULL) {
                 fprintf(stderr, "Memory reallocation failed!\n");
@@ -61,7 +93,7 @@ Token* generate_numbers(FILE* file, char first_number) {
 
             current = fgetc(file);
             if (current != EOF && (current == '+' || current == '-')) {
-                char sign = current;
+                int sign = current;
                 current = fgetc(file);
 
                 if (isdigit(current)) {
@@ -90,7 +122,7 @@ Token* generate_numbers(FILE* file, char first_number) {
 
     if (index >= capacity) {
         capacity++;
-        char* new_buffer = realloc(buffer, sizeof(char) * capacity);
+        char* new_buffer = realloc(buffer, sizeof(int) * capacity);
 
         if (new_buffer == NULL) {
             fprintf(stderr, "Memory reallocation failed!\n");
@@ -212,19 +244,8 @@ Token* generate_string(FILE* file, char first_letter) {
 } 
 
 
-Token* generate_comments(FILE* file, char first_char) {
-    if (first_char == EOF) return NULL;
 
-    Token* token = malloc(sizeof(*token));
-    if (token == NULL) return NULL;
-
-    int capacity = 3;
-    int index = 0;
-    char* buffer = malloc(sizeof(char) * capacity);
-}
-
-
-Token* generate_keywords(FILE* file, char first_letter) {
+Token* generate_keywords(FILE* file, int first_letter) {
     if (first_letter == EOF) return NULL;
 
     Token* token = malloc(sizeof(*token));
@@ -421,7 +442,7 @@ Token* generate_punctuators(FILE* file, char first_char) {
 
 TokenStream* lexer(FILE* file) {
     TokenStream* stream = init_tokens_stream();
-    char current;
+    int current;
     current = fgetc(file);
     
     while (current != EOF) {
@@ -430,14 +451,20 @@ TokenStream* lexer(FILE* file) {
             continue;
 
         } else if (current == '/') { 
-            current = fgetc(file);
+            int next = fgetc(file);
             
-            int capacity = 3;
-            int index = 0;
-            char* buffer = malloc(sizeof(char) * capacity);
+            if (next == '/') {
+                skip_single_line_comments(file);
+            } else if (next == '*') {
+                skip_multi_line_comments(file);
+            } else {
+                ungetc(next, file);
 
-            if (current == '/') {
-                Token* token_comment = generate_comments(file, current);
+                Token* token_punctuator = generate_punctuators(file, current);
+                if (token_punctuator != NULL) {
+                    add_tokens_to_stream(stream, token_punctuator);
+                    printf("FOUND A OPERATOR: %s\n", token_punctuator->value.string_value);
+                }
             }
 
         } else if (current == '"') {
