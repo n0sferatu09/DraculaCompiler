@@ -252,6 +252,61 @@ Token* generate_string(FILE* file, char first_letter) {
 } 
 
 
+Token* generate_characters(FILE* file, int first_char) {
+    if (first_char == EOF) return NULL;
+
+    Token* token = malloc(sizeof(*token));
+    if (token == NULL) return NULL;
+
+    int capacity = 4;
+    int index = 0;
+    char* buffer = malloc(sizeof(char) * capacity);
+    if (buffer == NULL) {
+        fprintf(stderr, "Memory allocation failed!\n");
+        free(token);
+        return NULL;
+    }
+
+    buffer[index++] = first_char;
+
+    char current = fgetc(file);
+    while (current != EOF && current != '\'') {
+        buffer[index++] = current;
+        current = fgetc(file);
+    }
+
+    if (current != EOF && current == '\'') {
+        buffer[index++] = current;
+    }
+
+    if (index >= capacity) {
+        capacity++;
+        char* new_buffer = realloc(buffer, sizeof(char) * capacity);
+
+        if (new_buffer == NULL) {
+            fprintf(stderr, "Memory reallocation failed!\n");
+            free(token);
+            free(buffer);
+            return NULL;
+        }
+
+        buffer = new_buffer;
+    }
+
+    buffer[index] = '\0';
+    
+    if (buffer != NULL) {
+        token->type = TOKEN_CHAR_CONSTANT;
+        token->value.char_value = strdup(buffer);
+    } else {
+        printf("%d | UNKNOWN SYMBOL: %s", current_line, buffer);
+        free(token);
+        return NULL;
+    }
+
+    return token;
+}
+
 
 Token* generate_keywords(FILE* file, int first_letter) {
     if (first_letter == EOF) return NULL;
@@ -481,13 +536,22 @@ TokenStream* lexer(FILE* file) {
                 }
             }
 
+        } else if (current == '\'') {
+            Token* token_char = generate_characters(file, current);
+
+            if (token_char != NULL) {
+                token_char->line = current_line;
+                add_tokens_to_stream(stream, token_char);
+                printf("%d | FOUND A CHARACTER: %s\n", current_line, token_char->value.string_value);
+            }
+
         } else if (current == '"') {
             Token* token_string = generate_string(file, current);
 
             if (token_string != NULL) {
                 token_string->line = current_line;
                 add_tokens_to_stream(stream, token_string);
-                printf("%d | FOUND A STRING: %s\n", current_line, token_string->value.string_value);
+                printf("%d | FOUND A STRING: %s\n", current_line, token_string->value.char_value);
             }
             
         } else if (current == '#') {
