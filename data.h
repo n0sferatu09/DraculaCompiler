@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <glib.h>
 
+
 int current_line = 1;
 
 
@@ -25,6 +26,7 @@ typedef enum {
     TOKEN_PREPROCESSOR,
     TOKEN_IDENTIFIER,
     TOKEN_STRING_LITERAL,
+    TOKEN_CHAR_CONSTANT,
 
     // Special Tokens
     TOKEN_COMMENT,
@@ -171,7 +173,7 @@ typedef struct {
     TokenType type;
     union {
         int int_value;
-        char char_value;
+        char *char_value;
         char *string_value;
         float float_value;
         double double_value;
@@ -231,3 +233,6 @@ void free_tokens_stream(TokenStream* stream) {
 
     free(stream->tokens);
 }
+
+
+
