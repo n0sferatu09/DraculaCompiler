@@ -19,27 +19,30 @@ The compiler is not ready for use yet. Stay tuned for updates!
 
 **To install, enter the following into the terminal:**
 
-```Shell
+```bash
 git clone https://github.com/n0sferatu09/DraculaCompiler.git
 
 ```
 
-## For operation:
+## For using:
 
-####  1. Open the main.c file.
+1. Open the **main.c** file.
 
-####  2. In the main function, find the line of code:
+2. In the main function, find the line of code:
 
 ```C
     file = fopen("filename.c", "r");
 ```
 
-#### 3. Replace "filename.c" with your file.
+3. Replace **"filename.c"** with your file.
 
-#### 4. Enter in the terminal:
+4. Enter in the terminal:
 
 ```Shell
     ./build.sh
 ```
 
-#### 5. Open the main.c file.
+5. Open the **main.c** file.
+
+## Licence
+MIT Licence
