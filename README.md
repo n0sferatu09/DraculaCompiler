@@ -24,7 +24,7 @@ git clone https://github.com/n0sferatu09/DraculaCompiler.git
 
 ```
 
-## For using:
+## How to use?
 
 1. Open the **main.c** file.
 
